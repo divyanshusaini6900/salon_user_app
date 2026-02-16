@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "463492451643",
+    "project_id": "yoyo-b047d",
+    "storage_bucket": "yoyo-b047d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:463492451643:android:d081c5d654146f3226bb1e",
+        "android_client_info": {
+          "package_name": "com.example.adminapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAWq5pVTZHL5PJa2GrSbDSPUZMffPhGQS8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:463492451643:android:bea11ffce92d5fbf26bb1e",
+        "android_client_info": {
+          "package_name": "com.example.userapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAWq5pVTZHL5PJa2GrSbDSPUZMffPhGQS8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
