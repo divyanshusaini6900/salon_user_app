@@ -99,57 +99,76 @@ class _AiStudioScreenState extends ConsumerState<AiStudioScreen> {
           _VoiceBookingCard(),
           Text('AI recommendations', style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: 12),
-          if (servicesAsync.value != null) ...looks.map((look) {
-            final service = servicesAsync.value!.firstWhere((item) => item.id == look.serviceId);
-            return Container(
-              margin: const EdgeInsets.only(bottom: 16),
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 74,
-                    height: 74,
+          servicesAsync.when(
+            data: (services) {
+              if (services.isEmpty) {
+                return const Text('No services available');
+              }
+              return Column(
+                children: looks.map((look) {
+                  final service = services.firstWhere(
+                    (item) => item.id == look.serviceId,
+                    orElse: () => services.first,
+                  );
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(colors: [Color(0xFFF3D0BE), Color(0xFFF1E5DA)]),
-                      borderRadius: BorderRadius.circular(18),
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Icon(Icons.auto_awesome, color: AppColors.secondary),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Row(
                       children: [
-                        Text(look.name, style: Theme.of(context).textTheme.titleLarge),
-                        const SizedBox(height: 4),
-                        Text(look.tagline, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.softInk)),
-                        const SizedBox(height: 8),
-                        Text(look.description, style: Theme.of(context).textTheme.bodyMedium),
+                        Container(
+                          width: 74,
+                          height: 74,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(colors: [Color(0xFFF3D0BE), Color(0xFFF1E5DA)]),
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                          child: const Icon(Icons.auto_awesome, color: AppColors.secondary),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(look.name, style: Theme.of(context).textTheme.titleLarge),
+                              const SizedBox(height: 4),
+                              Text(look.tagline,
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.softInk)),
+                              const SizedBox(height: 8),
+                              Text(look.description, style: Theme.of(context).textTheme.bodyMedium),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Column(
+                          children: [
+                            Text('?${service.price.toStringAsFixed(0)}',
+                                style: Theme.of(context).textTheme.titleMedium),
+                            const SizedBox(height: 8),
+                            OutlinedButton(
+                              onPressed: () {
+                                ref.read(bookingControllerProvider.notifier).selectService(service);
+                                context.go('/service/${service.id}');
+                              },
+                              child: const Text('Book this look'),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    children: [
-                      Text('?${service.price.toStringAsFixed(0)}', style: Theme.of(context).textTheme.titleMedium),
-                      const SizedBox(height: 8),
-                      OutlinedButton(
-                        onPressed: () {
-                          ref.read(bookingControllerProvider.notifier).selectService(service);
-                          context.go('/service/${service.id}');
-                        },
-                        child: const Text('Book this look'),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            );
-          }),
+                  );
+                }).toList(),
+              );
+            },
+            loading: () => const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            error: (err, stack) => const Text('Failed to load services'),
+          ),
           const SizedBox(height: 12),
           _EdgeCaseCard(),
         ],
