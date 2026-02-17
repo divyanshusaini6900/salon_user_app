@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/firebase_bootstrap.dart';
@@ -48,10 +49,11 @@ final userBookingsStreamProvider = Provider<Stream<List<UserBooking>>>((ref) {
     return Stream.value(const <UserBooking>[]);
   }
   final profile = ref.watch(authControllerProvider).profile;
-  if (profile == null) {
+  final uid = profile?.uid ?? FirebaseAuth.instance.currentUser?.uid;
+  if (uid == null) {
     return Stream.value(const <UserBooking>[]);
   }
-  return ref.read(firestoreServiceProvider).watchBookings(userId: profile.uid);
+  return ref.read(firestoreServiceProvider).watchBookings(userId: uid);
 });
 
 final timeSlotsProvider = Provider<List<String>>((ref) => timeSlots);

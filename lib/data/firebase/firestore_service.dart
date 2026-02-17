@@ -3,6 +3,23 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../features/booking/models.dart';
 import '../../features/bookings/user_booking.dart';
 
+
+int _toInt(dynamic value, [int fallback = 0]) {
+  if (value is int) return value;
+  if (value is double) return value.round();
+  if (value is num) return value.toInt();
+  if (value is String) return int.tryParse(value.trim()) ?? fallback;
+  return fallback;
+}
+
+double _toDouble(dynamic value, [double fallback = 0]) {
+  if (value is double) return value;
+  if (value is int) return value.toDouble();
+  if (value is num) return value.toDouble();
+  if (value is String) return double.tryParse(value.trim()) ?? fallback;
+  return fallback;
+}
+
 class FirestoreService {
   FirestoreService(this._firestore);
 
@@ -15,9 +32,9 @@ class FirestoreService {
       return Service(
         id: doc.id,
         name: data['name'] as String? ?? doc.id,
-        duration: Duration(minutes: (data['durationMinutes'] as num?)?.toInt() ?? 45),
-        price: (data['price'] as num?)?.toDouble() ?? 0,
-        rating: (data['rating'] as num?)?.toDouble() ?? 4.8,
+        duration: Duration(minutes: _toInt(data['durationMinutes'], 45)),
+        price: _toDouble(data['price'], 0),
+        rating: _toDouble(data['rating'], 4.8),
         category: data['category'] as String? ?? 'Hair',
         description: data['description'] as String? ?? '',
       );
@@ -43,9 +60,9 @@ class FirestoreService {
         return Service(
           id: doc.id,
           name: data['name'] as String? ?? doc.id,
-          duration: Duration(minutes: (data['durationMinutes'] as num?)?.toInt() ?? 45),
-          price: (data['price'] as num?)?.toDouble() ?? 0,
-          rating: (data['rating'] as num?)?.toDouble() ?? 4.8,
+          duration: Duration(minutes: _toInt(data['durationMinutes'], 45)),
+          price: _toDouble(data['price'], 0),
+          rating: _toDouble(data['rating'], 4.8),
           category: data['category'] as String? ?? 'Hair',
           description: data['description'] as String? ?? '',
         );
@@ -69,7 +86,6 @@ class FirestoreService {
     return _firestore
         .collection('bookings')
         .where('userId', isEqualTo: userId)
-        .orderBy('dateTime')
         .snapshots()
         .map((snapshot) => snapshot.docs.map(UserBooking.fromDoc).toList());
   }

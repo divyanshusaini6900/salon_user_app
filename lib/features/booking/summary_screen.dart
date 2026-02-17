@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 
 import '../../app/theme.dart';
@@ -72,8 +73,9 @@ class SummaryScreen extends ConsumerWidget {
               if (!booking.isComplete) return;
               if (FirebaseBootstrap.enableFirebase) {
                 final profile = ref.read(authControllerProvider).profile;
+                final user = FirebaseAuth.instance.currentUser;
                 final service = booking.service;
-                if (profile != null && service != null && booking.date != null && booking.timeSlot != null) {
+                if (service != null && booking.date != null && booking.timeSlot != null && user != null) {
                   DateTime? bookingDateTime;
                   try {
                     final parsed = DateFormat('hh:mm a').parse(booking.timeSlot!);
@@ -88,10 +90,10 @@ class SummaryScreen extends ConsumerWidget {
                     bookingDateTime = booking.date;
                   }
                   await ref.read(firestoreServiceProvider).createBooking({
-                    'userId': profile.uid,
-                    'customerName': profile.name,
-                    'customerEmail': profile.email,
-                    'customerPhone': profile.phone,
+                    'userId': user.uid,
+                    'customerName': profile?.name ?? 'Customer',
+                    'customerEmail': profile?.email ?? (user.email ?? ''),
+                    'customerPhone': profile?.phone ?? '',
                     'serviceId': service.id,
                     'serviceName': service.name,
                     'stylistName': booking.stylist?.name ?? '',

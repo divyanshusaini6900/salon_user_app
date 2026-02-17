@@ -30,6 +30,7 @@ class BookingsScreen extends ConsumerWidget {
           if (bookings.isEmpty) {
             return const Center(child: Text('No bookings yet'));
           }
+          bookings.sort((a, b) => a.dateTime.compareTo(b.dateTime));
           return ListView.separated(
             padding: EdgeInsets.fromLTRB(padding, 16, padding, 32),
             itemCount: bookings.length,
