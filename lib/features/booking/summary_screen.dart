@@ -7,6 +7,9 @@ import '../../app/theme.dart';
 import '../../shared/widgets/gradient_button.dart';
 import '../../shared/widgets/responsive.dart';
 import 'booking_controller.dart';
+import 'booking_providers.dart';
+import '../auth/auth_controller.dart';
+import '../../app/firebase_bootstrap.dart';
 
 class SummaryScreen extends ConsumerWidget {
   const SummaryScreen({super.key});
@@ -54,18 +57,54 @@ class SummaryScreen extends ConsumerWidget {
           const SizedBox(height: 24),
           Text('Price breakdown', style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: 12),
-          _PriceRow(label: 'Service', value: service != null ? '?${service.price.toStringAsFixed(0)}' : '?'),
+          _PriceRow(label: 'Service', value: service != null ? '?${service.price.toStringAsFixed(0)}' : '?0'),
           const SizedBox(height: 8),
           const _PriceRow(label: 'Stylist fee', value: '?199'),
           const SizedBox(height: 8),
           const _PriceRow(label: 'GST', value: '?72'),
           const Divider(height: 32),
-          _PriceRow(label: 'Total', value: service != null ? '?${(service.price + 271).toStringAsFixed(0)}' : '?', isTotal: true),
+          _PriceRow(label: 'Total', value: service != null ? '?${(service.price + 271).toStringAsFixed(0)}' : '?0', isTotal: true),
           const SizedBox(height: 32),
           GradientButton(
             label: 'Confirm booking',
             isEnabled: booking.isComplete,
-            onPressed: () => context.go('/success'),
+            onPressed: () async {
+              if (!booking.isComplete) return;
+              if (FirebaseBootstrap.enableFirebase) {
+                final profile = ref.read(authControllerProvider).profile;
+                final service = booking.service;
+                if (profile != null && service != null && booking.date != null && booking.timeSlot != null) {
+                  DateTime? bookingDateTime;
+                  try {
+                    final parsed = DateFormat('hh:mm a').parse(booking.timeSlot!);
+                    bookingDateTime = DateTime(
+                      booking.date!.year,
+                      booking.date!.month,
+                      booking.date!.day,
+                      parsed.hour,
+                      parsed.minute,
+                    );
+                  } catch (_) {
+                    bookingDateTime = booking.date;
+                  }
+                  await ref.read(firestoreServiceProvider).createBooking({
+                    'userId': profile.uid,
+                    'customerName': profile.name,
+                    'customerEmail': profile.email,
+                    'customerPhone': profile.phone,
+                    'serviceId': service.id,
+                    'serviceName': service.name,
+                    'stylistName': booking.stylist?.name ?? '',
+                    'dateTime': bookingDateTime ?? booking.date,
+                    'timeSlot': booking.timeSlot,
+                    'status': 'Confirmed',
+                    'price': service.price,
+                    'createdAt': DateTime.now(),
+                  });
+                }
+              }
+              context.go('/success');
+            },
           ),
           const SizedBox(height: 12),
           Text('Free cancellation up to 6 hours before your slot.',

@@ -7,6 +7,7 @@ import '../../shared/widgets/gradient_button.dart';
 import '../../shared/widgets/responsive.dart';
 import '../booking/booking_controller.dart';
 import '../booking/booking_providers.dart';
+import '../booking/models.dart';
 
 class ServiceDetailScreen extends ConsumerWidget {
   const ServiceDetailScreen({super.key, required this.serviceId});
@@ -15,14 +16,25 @@ class ServiceDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final servicesAsync = ref.watch(servicesProvider);
-    final stylistsAsync = ref.watch(stylistsProvider);
+    final servicesStream = ref.watch(servicesStreamProvider);
+    final stylistsStream = ref.watch(stylistsStreamProvider);
     final padding = Responsive.horizontalPadding(context);
     final isWide = Responsive.isTablet(context) || Responsive.isDesktop(context);
 
-    return servicesAsync.when(
-      data: (services) {
-        final service = services.firstWhere((s) => s.id == serviceId);
+    return StreamBuilder<List<Service>>(
+      stream: servicesStream,
+      builder: (context, serviceSnapshot) {
+        if (serviceSnapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        }
+        if (serviceSnapshot.hasError) {
+          return const Scaffold(body: Center(child: Text('Failed to load service')));
+        }
+        final services = serviceSnapshot.data ?? [];
+        if (services.isEmpty) {
+          return const Scaffold(body: Center(child: Text('No services available')));
+        }
+        final service = services.firstWhere((s) => s.id == serviceId, orElse: () => services.first);
         return Scaffold(
           appBar: AppBar(title: const Text('Service Detail')),
           body: ListView(
@@ -61,21 +73,29 @@ class ServiceDetailScreen extends ConsumerWidget {
           const SizedBox(height: 24),
           Text('Choose a stylist (optional)', style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 12),
-          stylistsAsync.when(
-            data: (stylists) => Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: stylists.map((stylist) {
-                final isSelected = ref.watch(bookingControllerProvider).stylist == stylist;
-                return ChoiceChip(
-                  label: Text('${stylist.name} ? ${stylist.level}'),
-                  selected: isSelected,
-                  onSelected: (_) => ref.read(bookingControllerProvider.notifier).selectStylist(stylist),
-                );
-              }).toList(),
-            ),
-            loading: () => const Padding(padding: EdgeInsets.all(8), child: CircularProgressIndicator()),
-            error: (err, stack) => const Text('Failed to load stylists'),
+          StreamBuilder<List<Stylist>>(
+            stream: stylistsStream,
+            builder: (context, stylistSnapshot) {
+              if (stylistSnapshot.connectionState == ConnectionState.waiting) {
+                return const Padding(padding: EdgeInsets.all(8), child: CircularProgressIndicator());
+              }
+              if (stylistSnapshot.hasError) {
+                return const Text('Failed to load stylists');
+              }
+              final stylists = stylistSnapshot.data ?? [];
+              return Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: stylists.map((stylist) {
+                  final isSelected = ref.watch(bookingControllerProvider).stylist == stylist;
+                  return ChoiceChip(
+                    label: Text('${stylist.name} - ${stylist.level}'),
+                    selected: isSelected,
+                    onSelected: (_) => ref.read(bookingControllerProvider.notifier).selectStylist(stylist),
+                  );
+                }).toList(),
+              );
+            },
           ),
           const SizedBox(height: 24),
           Container(
@@ -113,8 +133,6 @@ class ServiceDetailScreen extends ConsumerWidget {
       ),
     );
       },
-      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (err, stack) => const Scaffold(body: Center(child: Text('Failed to load service'))),
     );
   }
 }

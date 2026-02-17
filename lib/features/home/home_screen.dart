@@ -6,6 +6,7 @@ import '../../app/theme.dart';
 import '../../shared/widgets/gradient_button.dart';
 import '../../shared/widgets/responsive.dart';
 import '../../shared/widgets/section_header.dart';
+import '../../l10n/app_localizations.dart';
 import '../booking/booking_controller.dart';
 import '../booking/booking_providers.dart';
 import '../booking/models.dart';
@@ -15,7 +16,7 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final servicesAsync = ref.watch(servicesProvider);
+    final servicesStream = ref.watch(servicesStreamProvider);
     final padding = Responsive.horizontalPadding(context);
     final isWide = Responsive.isTablet(context) || Responsive.isDesktop(context);
 
@@ -44,20 +45,20 @@ class HomeScreen extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            Text('Lushe Salon', style: Theme.of(context).textTheme.displayMedium),
+                            Text(context.l10n.t('app_name'), style: Theme.of(context).textTheme.displayMedium),
                             const SizedBox(height: 12),
                             Text(
-                              'Single-location premium hair & wellness studio. Curated services, senior stylists, and AI-guided personalization.',
+                              context.l10n.t('home_tagline'),
                               style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppColors.softInk),
                             ),
                             const SizedBox(height: 16),
                             Wrap(
                               spacing: 12,
                               runSpacing: 12,
-                              children: const [
-                                _InfoPill(label: '4.9 rating', icon: Icons.star_rounded),
-                                _InfoPill(label: '9 AM - 8 PM', icon: Icons.schedule_rounded),
-                                _InfoPill(label: 'Bandra - Mumbai', icon: Icons.place_rounded),
+                              children: [
+                                _InfoPill(label: '4.9 ${context.l10n.t('rating')}', icon: Icons.star_rounded),
+                                const _InfoPill(label: '9 AM - 8 PM', icon: Icons.schedule_rounded),
+                                const _InfoPill(label: 'Bandra - Mumbai', icon: Icons.place_rounded),
                               ],
                             ),
                           ],
@@ -69,7 +70,7 @@ class HomeScreen extends ConsumerWidget {
                           child: SizedBox(
                             width: 220,
                             child: GradientButton(
-                              label: 'Book with AI\nStyle Studio',
+                              label: context.l10n.t('book_ai'),
                               onPressed: () => context.go('/ai'),
                               icon: Icons.auto_awesome,
                             ),
@@ -88,11 +89,11 @@ class HomeScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SectionHeader(
-                    title: 'Top Services',
-                    subtitle: 'Pick a service to start your booking journey.',
+                    title: context.l10n.t('home_top'),
+                    subtitle: context.l10n.t('home_sub'),
                     trailing: TextButton(
                       onPressed: () {},
-                      child: const Text('View all'),
+                      child: Text(context.l10n.t('view_all')),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -101,45 +102,61 @@ class HomeScreen extends ConsumerWidget {
               ),
             ),
           ),
-          servicesAsync.when(
-            data: (services) => SliverPadding(
-              padding: EdgeInsets.fromLTRB(padding, 0, padding, 32),
-              sliver: SliverGrid(
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: isWide ? 2 : 1,
-                  childAspectRatio: isWide ? 2.6 : 2.2,
-                  mainAxisSpacing: 16,
-                  crossAxisSpacing: 16,
+          StreamBuilder<List<Service>>(
+            stream: servicesStream,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const SliverToBoxAdapter(
+                  child: Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(24),
+                      child: CircularProgressIndicator(),
+                    ),
+                  ),
+                );
+              }
+              if (snapshot.hasError) {
+                return const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Text('Failed to load services'),
+                  ),
+                );
+              }
+              final services = snapshot.data ?? [];
+              if (services.isEmpty) {
+                return const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Text('No services available'),
+                  ),
+                );
+              }
+              return SliverPadding(
+                padding: EdgeInsets.fromLTRB(padding, 0, padding, 32),
+                sliver: SliverGrid(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: isWide ? 2 : 1,
+                    childAspectRatio: isWide ? 2.6 : 2.2,
+                    mainAxisSpacing: 16,
+                    crossAxisSpacing: 16,
+                  ),
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final service = services[index];
+                      return _ServiceCard(
+                        service: service,
+                        onTap: () {
+                          ref.read(bookingControllerProvider.notifier).selectService(service);
+                          context.go('/service/${service.id}');
+                        },
+                      );
+                    },
+                    childCount: services.length,
+                  ),
                 ),
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final service = services[index];
-                    return _ServiceCard(
-                      service: service,
-                      onTap: () {
-                        ref.read(bookingControllerProvider.notifier).selectService(service);
-                        context.go('/service/${service.id}');
-                      },
-                    );
-                  },
-                  childCount: services.length,
-                ),
-              ),
-            ),
-            loading: () => const SliverToBoxAdapter(
-              child: Center(
-                child: Padding(
-                  padding: EdgeInsets.all(24),
-                  child: CircularProgressIndicator(),
-                ),
-              ),
-            ),
-            error: (err, stack) => const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.all(24),
-                child: Text('Failed to load services'),
-              ),
-            ),
+              );
+            },
           ),
           SliverToBoxAdapter(
             child: Padding(
@@ -228,7 +245,7 @@ class _SearchBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextField(
       decoration: InputDecoration(
-        hintText: 'Search haircut, spa, color...',
+        hintText: context.l10n.t('search_hint'),
         prefixIcon: const Icon(Icons.search_rounded),
         suffixIcon: IconButton(icon: const Icon(Icons.tune_rounded), onPressed: () {}),
       ),
@@ -257,10 +274,10 @@ class _PromoBanner extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Summer Glow Package',
+                Text(context.l10n.t('promo_title'),
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.white)),
                 const SizedBox(height: 8),
-                Text('Bundle cut + color + spa with 15% off this week only.',
+                Text(context.l10n.t('promo_desc'),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white70)),
               ],
             ),
@@ -269,7 +286,7 @@ class _PromoBanner extends StatelessWidget {
           OutlinedButton(
             onPressed: () {},
             style: OutlinedButton.styleFrom(foregroundColor: Colors.white, side: const BorderSide(color: Colors.white70)),
-            child: const Text('Explore'),
+            child: Text(context.l10n.t('explore')),
           ),
         ],
       ),

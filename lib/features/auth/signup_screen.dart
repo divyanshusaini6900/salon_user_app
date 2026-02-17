@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../shared/widgets/gradient_button.dart';
 import '../../shared/widgets/responsive.dart';
+import '../../l10n/app_localizations.dart';
 import 'auth_controller.dart';
 
 class SignupScreen extends ConsumerStatefulWidget {
@@ -49,34 +50,34 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
             child: ListView(
               shrinkWrap: true,
               children: [
-                Text('Create your account', style: Theme.of(context).textTheme.headlineSmall),
+                Text(context.l10n.t('signup_title'), style: Theme.of(context).textTheme.headlineSmall),
                 const SizedBox(height: 12),
-                TextField(controller: _name, decoration: const InputDecoration(hintText: 'Full name')),
+                TextField(controller: _name, decoration: InputDecoration(hintText: context.l10n.t('full_name'))),
                 const SizedBox(height: 12),
-                TextField(controller: _phone, decoration: const InputDecoration(hintText: 'Mobile number')),
+                TextField(controller: _phone, decoration: InputDecoration(hintText: context.l10n.t('mobile_number'))),
                 const SizedBox(height: 12),
-                TextField(controller: _dob, decoration: const InputDecoration(hintText: 'Date of birth (DD/MM/YYYY)')),
+                TextField(controller: _dob, decoration: InputDecoration(hintText: context.l10n.t('dob'))),
                 const SizedBox(height: 12),
-                TextField(controller: _address, decoration: const InputDecoration(hintText: 'Address')),
+                TextField(controller: _address, decoration: InputDecoration(hintText: context.l10n.t('address'))),
                 const SizedBox(height: 12),
-                TextField(controller: _email, decoration: const InputDecoration(hintText: 'Email')),
+                TextField(controller: _email, decoration: InputDecoration(hintText: context.l10n.t('email'))),
                 const SizedBox(height: 12),
                 TextField(
                   controller: _password,
-                  decoration: const InputDecoration(hintText: 'Password'),
+                  decoration: InputDecoration(hintText: context.l10n.t('password')),
                   obscureText: true,
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: _confirm,
-                  decoration: const InputDecoration(hintText: 'Confirm password'),
+                  decoration: InputDecoration(hintText: context.l10n.t('confirm_password')),
                   obscureText: true,
                 ),
                 const SizedBox(height: 12),
                 SwitchListTile(
                   value: _enableBiometric,
                   onChanged: (value) => setState(() => _enableBiometric = value),
-                  title: const Text('Enable Face ID / biometric login on this device'),
+                  title: Text(context.l10n.t('enable_face')),
                 ),
                 if (auth.error != null)
                   Padding(
@@ -84,7 +85,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                     child: Text(auth.error!, style: const TextStyle(color: Colors.red)),
                   ),
                 GradientButton(
-                  label: auth.isLoading ? 'Please wait...' : 'Create account',
+                  label: auth.isLoading ? 'Please wait...' : context.l10n.t('create'),
                   onPressed: () {
                     if (_password.text != _confirm.text) {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -106,7 +107,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 const SizedBox(height: 12),
                 TextButton(
                   onPressed: () => context.go('/auth/login'),
-                  child: const Text('Back to login'),
+                  child: Text(context.l10n.t('back_to_login')),
                 ),
               ],
             ),

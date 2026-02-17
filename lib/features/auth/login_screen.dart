@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../shared/widgets/gradient_button.dart';
 import '../../shared/widgets/responsive.dart';
+import '../../l10n/app_localizations.dart';
+import '../../l10n/language_provider.dart';
 import 'auth_controller.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -26,12 +28,51 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
+  void _showLanguagePicker() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.language),
+                title: const Text('English'),
+                onTap: () {
+                  ref.read(languageProvider.notifier).state = const Locale('en');
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.language),
+                title: const Text('?????'),
+                onTap: () {
+                  ref.read(languageProvider.notifier).state = const Locale('hi');
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final padding = Responsive.horizontalPadding(context);
     final auth = ref.watch(authControllerProvider);
 
     return Scaffold(
+      appBar: AppBar(
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.language),
+            onPressed: _showLanguagePicker,
+          ),
+        ],
+      ),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 520),
@@ -40,9 +81,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('Welcome back', style: Theme.of(context).textTheme.headlineSmall),
+                Text(context.l10n.t('login_title'), style: Theme.of(context).textTheme.headlineSmall),
                 const SizedBox(height: 8),
-                Text('Login with password or Face ID / biometric.',
+                Text(context.l10n.t('login_subtitle'),
                     style: Theme.of(context).textTheme.bodyMedium),
                 const SizedBox(height: 24),
                 ToggleButtons(
@@ -50,25 +91,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   onPressed: (index) {
                     setState(() => _useBiometric = index == 1);
                   },
-                  children: const [
-                    Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: Text('Password login')),
-                    Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: Text('Face ID / Biometric')),
+                  children: [
+                    Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Text(context.l10n.t('password_login'))),
+                    Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Text(context.l10n.t('biometric_login'))),
                   ],
                 ),
                 const SizedBox(height: 20),
-                TextField(controller: _email, decoration: const InputDecoration(hintText: 'Email')),
+                TextField(controller: _email, decoration: InputDecoration(hintText: context.l10n.t('email'))),
                 const SizedBox(height: 12),
                 if (!_useBiometric) ...[
                   TextField(
                     controller: _password,
-                    decoration: const InputDecoration(hintText: 'Password'),
+                    decoration: InputDecoration(hintText: context.l10n.t('password')),
                     obscureText: true,
                   ),
                   const SizedBox(height: 12),
                   SwitchListTile(
                     value: _rememberForBiometric,
                     onChanged: (value) => setState(() => _rememberForBiometric = value),
-                    title: const Text('Enable biometric login on this device'),
+                    title: Text(context.l10n.t('enable_biometric')),
                   ),
                 ],
                 if (auth.error != null)
@@ -78,7 +119,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                 const SizedBox(height: 12),
                 GradientButton(
-                  label: auth.isLoading ? 'Please wait...' : (_useBiometric ? 'Continue with Face ID' : 'Login'),
+                  label: auth.isLoading ? 'Please wait...' : (_useBiometric ? context.l10n.t('continue_face') : context.l10n.t('login')),
                   onPressed: () {
                     if (_useBiometric) {
                       ref.read(authControllerProvider.notifier).loginWithBiometric(email: _email.text.trim());
@@ -94,7 +135,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 const SizedBox(height: 16),
                 TextButton(
                   onPressed: () => context.go('/auth/signup'),
-                  child: const Text('Create new account'),
+                  child: Text(context.l10n.t('create_account')),
                 ),
               ],
             ),

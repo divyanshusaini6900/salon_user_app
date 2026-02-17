@@ -1,34 +1,51 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../app/theme.dart';
 import '../../shared/widgets/responsive.dart';
+import '../booking/booking_providers.dart';
+import 'user_booking.dart';
 
-class BookingsScreen extends StatelessWidget {
+class BookingsScreen extends ConsumerWidget {
   const BookingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final padding = Responsive.horizontalPadding(context);
+    final stream = ref.watch(userBookingsStreamProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Your Bookings')),
-      body: ListView(
-        padding: EdgeInsets.fromLTRB(padding, 16, padding, 32),
-        children: [
-          _BookingCard(
-            title: 'Signature Haircut',
-            date: 'Sat, 22 Feb ? 5:00 PM',
-            stylist: 'with Yoyo',
-            status: 'Confirmed',
-          ),
-          const SizedBox(height: 16),
-          _BookingCard(
-            title: 'Scalp Renewal Spa',
-            date: 'Sun, 2 Mar ? 11:30 AM',
-            stylist: 'with Maya',
-            status: 'Upcoming',
-          ),
-        ],
+      body: StreamBuilder<List<UserBooking>>(
+        stream: stream,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return const Center(child: Text('Failed to load bookings'));
+          }
+          final bookings = snapshot.data ?? [];
+          if (bookings.isEmpty) {
+            return const Center(child: Text('No bookings yet'));
+          }
+          return ListView.separated(
+            padding: EdgeInsets.fromLTRB(padding, 16, padding, 32),
+            itemCount: bookings.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 16),
+            itemBuilder: (context, index) {
+              final booking = bookings[index];
+              final dateLabel = DateFormat('EEE, d MMM ? hh:mm a').format(booking.dateTime);
+              return _BookingCard(
+                title: booking.serviceName,
+                date: dateLabel,
+                stylist: booking.stylistName.isEmpty ? '' : 'with ${booking.stylistName}',
+                status: booking.status,
+              );
+            },
+          );
+        },
       ),
     );
   }
@@ -69,7 +86,8 @@ class _BookingCard extends StatelessWidget {
                 Text(title, style: Theme.of(context).textTheme.titleLarge),
                 const SizedBox(height: 4),
                 Text(date, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.softInk)),
-                Text(stylist, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.softInk)),
+                if (stylist.isNotEmpty)
+                  Text(stylist, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.softInk)),
               ],
             ),
           ),

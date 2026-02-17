@@ -10,6 +10,7 @@ import '../../shared/widgets/gradient_button.dart';
 import '../../shared/widgets/responsive.dart';
 import '../booking/booking_controller.dart';
 import '../booking/booking_providers.dart';
+import '../booking/models.dart';
 import 'ai_controller.dart';
 
 class AiStudioScreen extends ConsumerStatefulWidget {
@@ -32,7 +33,7 @@ class _AiStudioScreenState extends ConsumerState<AiStudioScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(aiControllerProvider);
     final looks = ref.watch(aiLooksProvider);
-    final servicesAsync = ref.watch(servicesProvider);
+    final servicesStream = ref.watch(servicesStreamProvider);
     final padding = Responsive.horizontalPadding(context);
 
     return Scaffold(
@@ -99,8 +100,19 @@ class _AiStudioScreenState extends ConsumerState<AiStudioScreen> {
           _VoiceBookingCard(),
           Text('AI recommendations', style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: 12),
-          servicesAsync.when(
-            data: (services) {
+          StreamBuilder<List<Service>>(
+            stream: servicesStream,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+              if (snapshot.hasError) {
+                return const Text('Failed to load services');
+              }
+              final services = snapshot.data ?? [];
               if (services.isEmpty) {
                 return const Text('No services available');
               }
@@ -163,11 +175,6 @@ class _AiStudioScreenState extends ConsumerState<AiStudioScreen> {
                 }).toList(),
               );
             },
-            loading: () => const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24),
-              child: Center(child: CircularProgressIndicator()),
-            ),
-            error: (err, stack) => const Text('Failed to load services'),
           ),
           const SizedBox(height: 12),
           _EdgeCaseCard(),

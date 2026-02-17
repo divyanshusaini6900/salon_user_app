@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/theme.dart';
+import '../../l10n/app_localizations.dart';
 
 class AppBottomNav extends StatelessWidget {
   const AppBottomNav({super.key, required this.currentIndex, required this.onTap});
@@ -28,12 +29,12 @@ class AppBottomNav extends StatelessWidget {
         selectedItemColor: AppColors.primary,
         unselectedItemColor: AppColors.softInk.withOpacity(0.6),
         showUnselectedLabels: true,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.calendar_month_rounded), label: 'Bookings'),
-          BottomNavigationBarItem(icon: Icon(Icons.auto_awesome_rounded), label: 'AI'),
-          BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_outline), label: 'Chat'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
+        items: [
+          BottomNavigationBarItem(icon: const Icon(Icons.home_rounded), label: context.l10n.t('home_top')),
+          BottomNavigationBarItem(icon: const Icon(Icons.calendar_month_rounded), label: context.l10n.t('your_bookings')),
+          const BottomNavigationBarItem(icon: Icon(Icons.auto_awesome_rounded), label: 'AI'),
+          BottomNavigationBarItem(icon: const Icon(Icons.chat_bubble_outline), label: context.l10n.t('ai_concierge')),
+          BottomNavigationBarItem(icon: const Icon(Icons.person_outline), label: context.l10n.t('profile')),
         ],
       ),
     );

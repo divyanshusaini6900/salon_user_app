@@ -9,6 +9,7 @@ import '../../shared/widgets/gradient_button.dart';
 import '../../shared/widgets/responsive.dart';
 import '../booking/booking_controller.dart';
 import '../booking/booking_providers.dart';
+import '../booking/models.dart';
 import 'voice_booking_parser.dart';
 
 class VoiceBookingScreen extends ConsumerStatefulWidget {
@@ -73,7 +74,7 @@ class _VoiceBookingScreenState extends ConsumerState<VoiceBookingScreen> {
   @override
   Widget build(BuildContext context) {
     final padding = Responsive.horizontalPadding(context);
-    final servicesAsync = ref.watch(servicesProvider);
+    final servicesStream = ref.watch(servicesStreamProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Voice Booking')),
@@ -142,13 +143,21 @@ class _VoiceBookingScreenState extends ConsumerState<VoiceBookingScreen> {
           const SizedBox(height: 24),
           Text('Popular services', style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
-          servicesAsync.when(
-            data: (services) => Wrap(
-              spacing: 8,
-              children: services.map((service) => Chip(label: Text(service.name))).toList(),
-            ),
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (err, stack) => const Text('Failed to load services'),
+          StreamBuilder<List<Service>>(
+            stream: servicesStream,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (snapshot.hasError) {
+                return const Text('Failed to load services');
+              }
+              final services = snapshot.data ?? [];
+              return Wrap(
+                spacing: 8,
+                children: services.map((service) => Chip(label: Text(service.name))).toList(),
+              );
+            },
           ),
         ],
       ),
